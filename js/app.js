@@ -165,7 +165,9 @@
   const inflight = {};
   function photoFor(r) {
     const cached = store.get(r.id);
-    if (cached && cached.v && cached.t > Date.now() - 14 * 864e5) return Promise.resolve(cached.v);
+    if (r.image) return Promise.resolve({ src: r.image, page: null, name: null }); // local photo bundled with the site
+    const pinnedOk = !r.photo || (cached && cached.v && cached.v.name === r.photo); // a pinned photo overrides older cached picks
+    if (cached && cached.v && pinnedOk && cached.t > Date.now() - 14 * 864e5) return Promise.resolve(cached.v);
     if (!inflight[r.id]) {
       inflight[r.id] = new Promise((resolve) => { queue.push({ r, resolve }); pump(); });
       inflight[r.id].then((v) => { if (!v) delete inflight[r.id]; }); // allow a retry later if nothing was found
@@ -461,7 +463,7 @@
     renderHighlights(r, $("#modalHl", modal));
     attachPhoto($("#modalImg", modal), r, (v) => {
       const c = $("#modalCredit", modal);
-      if (v) { c.href = v.page; c.textContent = "Photo: Wikimedia Commons — " + v.name.replace(/\.[a-z]+$/i, "").replace(/_/g, " "); }
+      if (v && v.page) { c.href = v.page; c.textContent = "Photo: Wikimedia Commons — " + v.name.replace(/\.[a-z]+$/i, "").replace(/_/g, " "); }
     });
     fillDriverPhotos(modal);
     if (typeof modal.showModal === "function") modal.showModal(); else modal.setAttribute("open", "");

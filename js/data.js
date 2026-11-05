@@ -14,6 +14,7 @@
  * wiki     – English Wikipedia article used to source a circuit photo at runtime.
  * photoQuery – optional Wikimedia Commons search used if the article has no usable photo.
  * photo    – optional exact Commons filename to force a specific photo.
+ * image    – optional local photo in the repo (e.g. assets/photos/madring.jpg); used instead of Commons.
  */
 window.SEASON = 2026;
 
@@ -122,7 +123,7 @@ window.RACES = [
     lapRecord: { time: "1:20.901", driver: "Lando Norris", team: "McLaren", year: 2025 } },
 
   { id: "es-2026", winner: "antonelli", video: "NK7AfP_wi8M", gp: "Spanish Grand Prix", country: "Spain", cc: "es", city: "Madrid",
-    circuit: "Madring", wiki: "Madring", photoQuery: "Madring circuit Madrid",
+    circuit: "Madring", wiki: "Madring", image: "assets/photos/madring.jpg",
     start: "2026-09-11", end: "2026-09-13", raceUtc: "2026-09-13T13:00:00Z", newVenue: true,
     length: 5.474, laps: 57, firstGp: 2026, turns: 22, type: "Hybrid street",
     lapRecord: { time: "1:35.587", driver: "George Russell", team: "Mercedes", year: 2026 } },

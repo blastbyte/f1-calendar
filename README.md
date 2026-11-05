@@ -25,7 +25,7 @@ Add `?date=2026-05-01` to the URL to preview the calendar as of any date.
 
 ## Data sources
 - Circuit layouts: [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) (MIT, see `js/TRACKS_LICENSE.md`), pre-converted to SVG paths in `js/tracks.js`
-- Photos: Wikimedia Commons, via the Wikipedia API at runtime. Driver photos are the lead image of each driver's Wikipedia article.
+- Photos: Wikimedia Commons, via the Wikipedia API at runtime. A race can instead use a local photo in `assets/photos/` through its `image` field (Madring does). Driver photos are the lead image of each driver's Wikipedia article.
 - Flags: flagcdn.com
 - Calendar, winners, drivers, lap records and race times: `js/data.js`. Lap records are official race-lap records. Start times are approximate.
 
