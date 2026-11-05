@@ -274,7 +274,6 @@ img { display: block; max-width: 100%; }
 .track-svg .finish-chk { stroke: #0b0b12; stroke-width: 6; stroke-dasharray: 6 6; }
 .track-svg .car { fill: #fff; filter: drop-shadow(0 0 8px #fff) drop-shadow(0 0 16px var(--red)); }
 .track-svg .dir { fill: var(--text); }
-.card.is-done .track-svg .sector, .card.is-cancelled .track-svg .sector { stroke: #d8d8e0; }
 .card.is-cancelled .track-svg .sector { stroke: #6d6d80; }
 
 /* ---------- Modal ---------- */

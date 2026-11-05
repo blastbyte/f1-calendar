@@ -248,7 +248,7 @@
         <div class="card__round">${roundLbl}</div>
         <div class="badges">${badges(r)}</div>
       </div>
-      <div class="card__map">${trackSVG(r.id, { mono: r.done || r.cancelled })}</div>
+      <div class="card__map">${trackSVG(r.id, { mono: r.cancelled })}</div>
       <div class="card__body">
         <div class="card__country">${flag(r.cc)}${esc(r.country)}</div>
         <h3 class="card__gp">${esc(r.gp.replace(/ Grand Prix$/, ""))}</h3>
