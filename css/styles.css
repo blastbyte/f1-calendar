@@ -435,3 +435,12 @@ img { display: block; max-width: 100%; }
 }
 .hl__ext svg { width: 13px; height: 13px; }
 .hl__play:hover .hl__ext { background: #ff0033; border-color: #ff0033; }
+.hl__play::after { background: linear-gradient(0deg, rgba(0, 0, 0, 0.35) 0%, transparent 35%); }
+.hl__caption { margin: 10px 0 0; font-size: 15px; font-weight: 600; color: var(--muted); }
+.hl__head .k, .hl__src { white-space: nowrap; }
+@media (max-width: 560px) {
+  .hl__head .k { font-size: 10.5px; letter-spacing: 0.14em; }
+  .hl__src { font-size: 10.5px; gap: 6px; }
+  .hl__ext { top: 8px; right: 8px; padding: 4px 8px; font-size: 10.5px; }
+}
+@media (max-width: 400px) { .hl__src { display: none; } }

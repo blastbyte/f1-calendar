@@ -412,9 +412,9 @@
           <img src="https://i.ytimg.com/vi/${encodeURIComponent(r.video)}/hqdefault.jpg" alt="" loading="lazy">
           <span class="hl__btn">${YT_ICON}</span>
           <span class="hl__ext">${EXT_ICON} Watch on YouTube</span>
-          <span class="hl__title">${esc(title)}</span>
         </a>
-      </div>`;
+      </div>
+      <p class="hl__caption">${esc(title)}</p>`;
   }
 
   /* ---------------- Modal ---------------- */
