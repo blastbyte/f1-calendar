@@ -6,6 +6,8 @@
  * raceUtc  – approximate lights-out time in UTC, used for countdown / status.
  * lapRecord – official race lap record (fastest lap set during a Grand Prix).
  * wiki     – English Wikipedia article used to source a circuit photo at runtime.
+ * photoQuery – optional Wikimedia Commons search used if the article has no usable photo.
+ * photo    – optional exact Commons filename to force a specific photo.
  */
 window.SEASON = 2026;
 
@@ -35,7 +37,7 @@ window.RACES = [
     lapRecord: { time: "1:31.447", driver: "Pedro de la Rosa", team: "McLaren", year: 2005 } },
 
   { id: "sa-2021", gp: "Saudi Arabian Grand Prix", country: "Saudi Arabia", cc: "sa", city: "Jeddah",
-    circuit: "Jeddah Corniche Circuit", wiki: "Jeddah_Corniche_Circuit",
+    circuit: "Jeddah Corniche Circuit", wiki: "Jeddah_Corniche_Circuit", photoQuery: "Jeddah Corniche Circuit",
     start: "2026-04-17", end: "2026-04-19", raceUtc: "2026-04-19T17:00:00Z", cancelled: true,
     length: 6.174, laps: 50, firstGp: 2021, turns: 27, type: "Street",
     lapRecord: { time: "1:30.734", driver: "Lewis Hamilton", team: "Mercedes", year: 2021 } },
@@ -101,7 +103,7 @@ window.RACES = [
     lapRecord: { time: "1:20.901", driver: "Lando Norris", team: "McLaren", year: 2025 } },
 
   { id: "es-2026", gp: "Spanish Grand Prix", country: "Spain", cc: "es", city: "Madrid",
-    circuit: "Madring", wiki: "Madring",
+    circuit: "Madring", wiki: "Madring", photoQuery: "Madring circuit Madrid",
     start: "2026-09-11", end: "2026-09-13", raceUtc: "2026-09-13T13:00:00Z", newVenue: true,
     length: 5.474, laps: 57, firstGp: 2026, turns: 22, type: "Hybrid street",
     lapRecord: { time: "1:35.587", driver: "George Russell", team: "Mercedes", year: 2026 } },
@@ -137,7 +139,7 @@ window.RACES = [
     lapRecord: { time: "1:10.540", driver: "Valtteri Bottas", team: "Mercedes", year: 2018 } },
 
   { id: "us-2023", gp: "Las Vegas Grand Prix", country: "United States", cc: "us", city: "Las Vegas",
-    circuit: "Las Vegas Strip Circuit", wiki: "Las_Vegas_Strip_Circuit",
+    circuit: "Las Vegas Strip Circuit", wiki: "Las_Vegas_Strip_Circuit", photoQuery: "Las Vegas Grand Prix",
     start: "2026-11-19", end: "2026-11-21", raceUtc: "2026-11-22T04:00:00Z", saturday: true, night: true,
     length: 6.201, laps: 50, firstGp: 2023, turns: 17, type: "Street",
     lapRecord: { time: "1:33.365", driver: "Max Verstappen", team: "Red Bull", year: 2025 } },
