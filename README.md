@@ -29,3 +29,7 @@ Add `?date=2026-05-01` to the URL to preview the calendar as of any date.
 - Calendar, winners, drivers, lap records and race times: `js/data.js`. Lap records are official race-lap records. Start times are approximate.
 
 Unofficial fan project. Not affiliated with Formula One Group or the FIA.
+
+## Deployment
+- **GitHub Pages:** `.github/workflows/pages.yml` publishes the repo root on every push to `main`. In the repo, go to Settings → Pages → Build and deployment and set **Source** to **GitHub Actions** (one-time). The site is served at https://blastbyte.github.io/f1-calendar/.
+- **Cloudflare Workers:** also auto-deploys from `main`.
