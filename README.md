@@ -5,7 +5,7 @@ A broadcast-style calendar for the 2026 Formula One season: a static site with n
 **Features**
 - All 23 championship rounds. That includes the Bahrain Grand Prix re-staged at Sepang, Malaysia. The original April Bahrain and Saudi Arabia dates are shown as *called off*
 - The race winner on each completed race, with their photo, team colour and name
-- Official F1 race highlights from YouTube in each completed race's detail view. Each video is checked against the FORMULA 1 channel before it is embedded.
+- Official F1 race highlights in each completed race's detail view. Clicking the thumbnail opens the exact video on YouTube, because F1 disables embedding.
 - A next-race hero panel with a live countdown and an animated track map with a glowing car
 - For each circuit: country, flag, name, dates, length, laps, sprint weekends and the race lap record
 - Track maps drawn as SVG from real circuit geometry, coloured by sector

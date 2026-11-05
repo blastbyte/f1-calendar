@@ -388,75 +388,33 @@
   }
 
   /* ---------------- Official race highlights (YouTube) ----------------
-   * Each completed race lists candidate video IDs. Before embedding, the browser checks the
-   * video's oEmbed metadata: it must come from the FORMULA 1 channel and its title must name
-   * this race's 2026 race highlights. If nothing verifies, the panel links to a search of the channel.
+   * Formula 1 has disabled embedding of its videos, so the panel shows the video thumbnail and
+   * opens the exact highlights video on YouTube in a new tab. `race.video` holds the verified
+   * video ID from the FORMULA 1 channel. Without one, the panel links to a search of the channel.
    */
   const F1_CHANNEL = "https://www.youtube.com/@Formula1";
-  const hlKeyword = (r) => r.gp.replace(/ Grand Prix.*$/, "").split(/[\s-]/)[0].toLowerCase();
-  const oembed = (id) => {
-    const watch = "https://www.youtube.com/watch?v=" + id;
-    const tries = [
-      "https://www.youtube.com/oembed?format=json&url=" + encodeURIComponent(watch),
-      "https://noembed.com/embed?url=" + encodeURIComponent(watch),
-    ];
-    const next = (i) => i >= tries.length ? Promise.reject(new Error("no oembed"))
-      : fetch(tries[i]).then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
-        .then((j) => (j && j.title ? j : Promise.reject(j && j.error))).catch(() => next(i + 1));
-    return next(0);
-  };
-  function isOfficialHighlight(meta, r) {
-    const author = (meta.author_name || "").trim().toLowerCase();
-    const url = (meta.author_url || "").toLowerCase();
-    const official = author === "formula 1" || /youtube\.com\/(@formula1|channel\/ucb_qr75-ydfvksf9dmo6izg)\/?$/.test(url);
-    const t = meta.title || "";
-    return official && /race highlights/i.test(t) && /2026/.test(t) && !/\bF[23]\b|sprint|academy/i.test(t)
-      && t.toLowerCase().includes(hlKeyword(r));
-  }
-  function findHighlight(r) {
-    const cached = store.get("hl:" + r.id);
-    if (cached && cached.v && cached.t > Date.now() - 30 * 864e5) return Promise.resolve(cached.v);
-    const ids = r.highlights || [];
-    const step = (i) => {
-      if (i >= ids.length) return Promise.resolve(null);
-      return oembed(ids[i]).then((m) => {
-        if (isOfficialHighlight(m, r)) {
-          const v = { id: ids[i], title: m.title };
-          store.set("hl:" + r.id, { t: Date.now(), v });
-          return v;
-        }
-        return step(i + 1);
-      }, () => step(i + 1));
-    };
-    return step(0);
-  }
   const YT_ICON = `<svg viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#ff0033"/><path d="M11 5.5v9l8-4.5z" fill="#fff"/></svg>`;
+  const EXT_ICON = `<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h4v4M13 3 7 9M12 9.5V13H3V4h3.5"/></svg>`;
   function renderHighlights(r, el) {
     if (!el) return;
     if (!r.done) { el.remove(); return; }
-    const searchUrl = `${F1_CHANNEL}/search?query=${encodeURIComponent("Race Highlights 2026 " + r.gp)}`;
-    el.innerHTML = `<div class="hl__head"><span class="k">Official race highlights</span><span class="hl__src">${YT_ICON} FORMULA 1</span></div>
-      <div class="hl__frame is-loading"><div class="hl__spin"></div></div>`;
-    findHighlight(r).then((v) => {
-      if (!el.isConnected) return;
-      const frame = $(".hl__frame", el);
-      if (!v) {
-        frame.outerHTML = `<a class="hl__fallback" href="${searchUrl}" target="_blank" rel="noopener">
-          ${YT_ICON}<span><b>Watch the ${esc(r.gp)} highlights</b><small>Opens the official F1 YouTube channel</small></span></a>`;
-        return;
-      }
-      frame.classList.remove("is-loading");
-      frame.innerHTML = `<button class="hl__play" aria-label="Play ${esc(v.title)}">
-          <img src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" alt="" loading="lazy">
+    const head = `<div class="hl__head"><span class="k">Official race highlights</span><span class="hl__src">${YT_ICON} FORMULA 1</span></div>`;
+    if (!r.video) {
+      const searchUrl = `${F1_CHANNEL}/search?query=${encodeURIComponent("Race Highlights 2026 " + r.gp)}`;
+      el.innerHTML = head + `<a class="hl__fallback" href="${searchUrl}" target="_blank" rel="noopener">
+        ${YT_ICON}<span><b>Watch the ${esc(r.gp)} highlights</b><small>Opens the official F1 YouTube channel</small></span></a>`;
+      return;
+    }
+    const title = `Race Highlights | ${window.SEASON} ${r.gp}`;
+    const watch = `https://www.youtube.com/watch?v=${encodeURIComponent(r.video)}`;
+    el.innerHTML = head + `<div class="hl__frame">
+        <a class="hl__play" href="${watch}" target="_blank" rel="noopener" aria-label="Watch ${esc(title)} on YouTube (opens in a new tab)">
+          <img src="https://i.ytimg.com/vi/${encodeURIComponent(r.video)}/hqdefault.jpg" alt="" loading="lazy">
           <span class="hl__btn">${YT_ICON}</span>
-          <span class="hl__title">${esc(v.title)}</span>
-        </button>`;
-      $(".hl__play", frame).addEventListener("click", () => {
-        frame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&modestbranding=1"
-          title="${esc(v.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
-      }, { once: true });
-    });
+          <span class="hl__ext">${EXT_ICON} Watch on YouTube</span>
+        </a>
+      </div>
+      <p class="hl__caption">${esc(title)}</p>`;
   }
 
   /* ---------------- Modal ---------------- */
