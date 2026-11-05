@@ -427,3 +427,11 @@ img { display: block; max-width: 100%; }
   .hl__btn svg { width: 64px; height: 46px; }
   .hl__title { font-size: 15px; left: 14px; bottom: 10px; }
 }
+.hl__play { display: block; color: var(--text); text-decoration: none; }
+.hl__ext {
+  position: absolute; top: 14px; right: 14px; z-index: 2; display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  background: rgba(11, 11, 18, 0.8); border: 1px solid var(--line-2); backdrop-filter: blur(6px);
+}
+.hl__ext svg { width: 13px; height: 13px; }
+.hl__play:hover .hl__ext { background: #ff0033; border-color: #ff0033; }
