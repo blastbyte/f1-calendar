@@ -78,63 +78,106 @@
     </svg>`;
   }
 
-  /* ---------------- Circuit photos (Wikimedia Commons, via Wikipedia API) ---------------- */
-  const CACHE_KEY = "gp-photo-v2:";
+  /* ---------------- Circuit photos (Wikimedia Commons, via Wikipedia API) ----------------
+   * 1. race.photo  – optional exact Commons filename override
+   * 2. images used on the circuit's Wikipedia article, ranked by filename then size
+   * 3. fallback: Wikimedia Commons file search for race.photoQuery || circuit name
+   */
+  const CACHE_KEY = "gp-photo-v3:";
   const store = {
     get(k) { try { return JSON.parse(localStorage.getItem(CACHE_KEY + k)); } catch { return null; } },
     set(k, v) { try { localStorage.setItem(CACHE_KEY + k, JSON.stringify(v)); } catch { /* ignore */ } },
   };
-  const BAD = /(logo|flag|map|layout|plan|diagram|portrait|helmet|signature|trophy|icon|coat[_ ]of|seal|ticket|poster|badge|svg|banner|crest|stamp|graph|chart)/i;
+  const WP = "https://en.wikipedia.org/w/api.php?";
+  const COMMONS = "https://commons.wikimedia.org/w/api.php?";
+  const api = (base, q) => fetch(base + new URLSearchParams({ format: "json", origin: "*", ...q })).then((r) => r.json());
+  const IINFO = { prop: "imageinfo", iiprop: "url|size|mime", iiurlwidth: "1600" };
+
+  const BAD_WORDS = new Set(["logo", "flag", "map", "maps", "layout", "plan", "diagram", "portrait", "helmet", "signature",
+    "trophy", "icon", "seal", "ticket", "poster", "badge", "banner", "crest", "stamp", "chart", "locator", "location", "coa", "render", "rendering"]);
+  const words = (name) => name.toLowerCase().replace(/\.[a-z0-9]+$/, "").split(/[^a-z0-9À-ɏ]+/).filter(Boolean);
+  const isBad = (name) => /coat[_ ]of[_ ]arms/i.test(name) || words(name).some((w) => BAD_WORDS.has(w));
   const GOOD = [
     [/aerial|luftbild|from[_ ]above|bird|drone|overview|panorama/i, 7],
-    [/circuit|track|autodrom|ring|raceway|speedway|course|street/i, 3],
-    [/grid|start|race|grand[_ ]prix|gp|formula|f1/i, 2],
+    [/circuit|track|autodrom|ring|raceway|speedway|course|street|strip/i, 3],
+    [/grid|start|race|grand[_ ]prix|\bgp\b|formula|\bf1\b/i, 2],
     [/pit|grandstand|straight|corner|turn|hairpin|chicane|curve|view|tribune|paddock|night/i, 2],
   ];
-  function scoreImage(p, r) {
-    const ii = p.imageinfo && p.imageinfo[0];
-    if (!ii || !/jpe?g|webp/.test(ii.mime || "")) return -1;
-    const name = p.title.replace(/^File:/, "");
-    if (BAD.test(name)) return -1;
-    if (ii.width < 900) return -1;
+  function nameScore(name, r) {
+    if (!/\.(jpe?g|webp)$/i.test(name) || isBad(name)) return null;
     let s = 0;
+    GOOD.forEach(([re, w]) => { if (re.test(name)) s += w; });
+    const lower = name.toLowerCase();
+    (r.circuit + " " + r.city).toLowerCase().split(/[\s-]+/).filter((w) => w.length > 3)
+      .forEach((w) => { if (lower.includes(w)) s += 2; });
+    if (/20[12]\d/.test(name)) s += 1;
+    return s;
+  }
+  function fullScore(p, r, bonus = 0) {
+    const ii = p.imageinfo && p.imageinfo[0];
+    if (!ii || !/jpe?g|webp/.test(ii.mime || "")) return null;
+    const s0 = nameScore(p.title.replace(/^File:/, ""), r);
+    if (s0 === null) return null;
+    let s = s0 + bonus;
     const ratio = ii.width / ii.height;
     if (ratio >= 1.25) s += 3; else if (ratio < 1) s -= 4;
-    GOOD.forEach(([re, w]) => { if (re.test(name)) s += w; });
-    const tokens = (r.circuit + " " + r.city).toLowerCase().split(/[\s-]+/).filter((w) => w.length > 3);
-    tokens.forEach((w) => { if (name.toLowerCase().includes(w)) s += 2; });
-    const yr = name.match(/20[12]\d/); if (yr) s += 1;
+    if (ii.width < 800) s -= 6;
     return s;
+  }
+  const pickBest = (pages, r, bonusFn) => pages
+    .map((p, i) => ({ p, s: fullScore(p, r, bonusFn ? bonusFn(p, i) : 0) }))
+    .filter((x) => x.s !== null).sort((a, b) => b.s - a.s)[0];
+  const toPhoto = (p) => p && {
+    src: p.imageinfo[0].thumburl || p.imageinfo[0].url,
+    page: p.imageinfo[0].descriptionurl,
+    name: p.title.replace(/^File:/, ""),
+  };
+
+  async function findPhoto(r) {
+    if (r.photo) {
+      const d = await api(COMMONS, { action: "query", titles: "File:" + r.photo, ...IINFO });
+      const p = Object.values(d.query?.pages || {})[0];
+      if (p && p.imageinfo) return toPhoto(p);
+    }
+    // Step 1: list every file on the article (cheap, no thumbnail limit), shortlist by filename.
+    const list = await api(WP, { action: "query", redirects: "1", titles: r.wiki, prop: "images", imlimit: "max" });
+    const titles = Object.values(list.query?.pages || {}).flatMap((p) => (p.images || []).map((im) => im.title));
+    const shortlist = titles
+      .map((t) => ({ t, s: nameScore(t.replace(/^File:/, ""), r) }))
+      .filter((x) => x.s !== null).sort((a, b) => b.s - a.s).slice(0, 15).map((x) => x.t);
+    if (shortlist.length) {
+      const d = await api(WP, { action: "query", titles: shortlist.join("|"), ...IINFO });
+      const best = pickBest(Object.values(d.query?.pages || {}), r);
+      if (best && best.s > -4) return toPhoto(best.p);
+    }
+    // Step 2: search Wikimedia Commons directly.
+    const q = r.photoQuery || r.circuit;
+    const d = await api(COMMONS, {
+      action: "query", generator: "search", gsrsearch: `${q} filetype:bitmap`, gsrnamespace: "6", gsrlimit: "25", ...IINFO,
+    });
+    const pages = Object.values(d.query?.pages || {});
+    const best = pickBest(pages, r, (p) => Math.max(0, 6 - (p.index || 0) / 3)); // favour search relevance
+    return best ? toPhoto(best.p) : null;
   }
 
   const queue = [];
   let active = 0;
+  const inflight = {};
   function photoFor(r) {
-    const cached = store.get(r.wiki);
-    if (cached && cached.t > Date.now() - 14 * 864e5) return Promise.resolve(cached.v);
-    return new Promise((resolve) => { queue.push({ r, resolve }); pump(); });
+    const cached = store.get(r.id);
+    if (cached && cached.v && cached.t > Date.now() - 14 * 864e5) return Promise.resolve(cached.v);
+    if (!inflight[r.id]) {
+      inflight[r.id] = new Promise((resolve) => { queue.push({ r, resolve }); pump(); });
+      inflight[r.id].then((v) => { if (!v) delete inflight[r.id]; }); // allow a retry later if nothing was found
+    }
+    return inflight[r.id];
   }
   function pump() {
     while (active < 4 && queue.length) {
       const { r, resolve } = queue.shift();
       active++;
-      const url = "https://en.wikipedia.org/w/api.php?" + new URLSearchParams({
-        action: "query", format: "json", origin: "*", redirects: "1", titles: r.wiki,
-        generator: "images", gimlimit: "200", prop: "imageinfo", iiprop: "url|size|mime", iiurlwidth: "1600",
-      });
-      fetch(url)
-        .then((res) => res.json())
-        .then((data) => {
-          const pages = Object.values((data.query && data.query.pages) || {});
-          const best = pages.map((p) => ({ p, s: scoreImage(p, r) })).filter((x) => x.s >= 0).sort((a, b) => b.s - a.s)[0];
-          const v = best ? {
-            src: best.p.imageinfo[0].thumburl || best.p.imageinfo[0].url,
-            page: best.p.imageinfo[0].descriptionurl,
-            name: best.p.title.replace(/^File:/, ""),
-          } : null;
-          store.set(r.wiki, { t: Date.now(), v });
-          resolve(v);
-        })
+      findPhoto(r)
+        .then((v) => { if (v) store.set(r.id, { t: Date.now(), v }); resolve(v); })
         .catch(() => resolve(null))
         .finally(() => { active--; pump(); });
     }
