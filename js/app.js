@@ -165,7 +165,8 @@
   const inflight = {};
   function photoFor(r) {
     const cached = store.get(r.id);
-    if (cached && cached.v && cached.t > Date.now() - 14 * 864e5) return Promise.resolve(cached.v);
+    const pinnedOk = !r.photo || (cached && cached.v && cached.v.name === r.photo); // a pinned photo overrides older cached picks
+    if (cached && cached.v && pinnedOk && cached.t > Date.now() - 14 * 864e5) return Promise.resolve(cached.v);
     if (!inflight[r.id]) {
       inflight[r.id] = new Promise((resolve) => { queue.push({ r, resolve }); pump(); });
       inflight[r.id].then((v) => { if (!v) delete inflight[r.id]; }); // allow a retry later if nothing was found
