@@ -192,6 +192,58 @@
     });
   }
 
+  /* ---------------- Driver photos (Wikipedia lead image of each driver's article) ---------------- */
+  const DRIVERS = window.DRIVERS || {};
+  const TEAMS = window.TEAMS || {};
+  let driverPhotos;
+  function driverPhotosAll() {
+    if (driverPhotos) return driverPhotos;
+    const cached = store.get("drivers");
+    if (cached && cached.v && cached.t > Date.now() - 14 * 864e5) return (driverPhotos = Promise.resolve(cached.v));
+    const keys = Object.keys(DRIVERS);
+    driverPhotos = api(WP, {
+      action: "query", redirects: "1", prop: "pageimages", piprop: "thumbnail", pithumbsize: "320",
+      titles: keys.map((k) => DRIVERS[k].wiki).join("|"),
+    }).then((d) => {
+      const q = d.query || {};
+      // map requested title -> final page title (normalisation + redirects)
+      const alias = {};
+      [...(q.normalized || []), ...(q.redirects || [])].forEach((n) => { alias[n.from] = n.to; });
+      const resolve = (t) => { let x = t.replace(/_/g, " "); while (alias[x]) x = alias[x]; return x; };
+      const byTitle = {};
+      Object.values(q.pages || {}).forEach((p) => { if (p.thumbnail) byTitle[p.title] = p.thumbnail.source; });
+      const out = {};
+      keys.forEach((k) => { const src = byTitle[resolve(DRIVERS[k].wiki)]; if (src) out[k] = src; });
+      if (Object.keys(out).length) store.set("drivers", { t: Date.now(), v: out });
+      else driverPhotos = null; // allow retry
+      return out;
+    }).catch(() => { driverPhotos = null; return {}; });
+    return driverPhotos;
+  }
+  function fillDriverPhotos(root) {
+    const imgs = root.querySelectorAll("img[data-driver]");
+    if (!imgs.length) return;
+    driverPhotosAll().then((map) => imgs.forEach((img) => {
+      const src = map[img.dataset.driver];
+      if (!src) return;
+      img.onload = () => img.classList.add("is-loaded");
+      img.src = src;
+    }));
+  }
+  function winnerHTML(r, big = false) {
+    const d = r.done && DRIVERS[r.winner];
+    if (!d) return "";
+    return `<div class="winner${big ? " winner--big" : ""}" style="--team:${TEAMS[d.team] || "#fff"}">
+      <div class="winner__pic"><span>${d.code}</span><img data-driver="${r.winner}" alt="${esc(d.first + " " + d.last)}"></div>
+      <div class="winner__txt">
+        <span class="k">Winner</span>
+        <span class="winner__name">${esc(d.first)} <b>${esc(d.last)}</b></span>
+        <span class="winner__team">${esc(d.team)}</span>
+      </div>
+      <svg class="winner__flag" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v18M5 4h13l-3 4 3 4H5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+    </div>`;
+  }
+
   /* ---------------- Hero ---------------- */
   let tick;
   function renderHero() {
@@ -278,6 +330,7 @@
     else if (r.done) b.push(`<span class="badge badge--done">Completed</span>`);
     if (r.sprint && !r.cancelled) b.push(`<span class="badge badge--sprint">Sprint</span>`);
     if (r.newVenue) b.push(`<span class="badge badge--new">New</span>`);
+    if (r.replacement) b.push(`<span class="badge badge--new">Relocated</span>`);
     return b.join("");
   }
 
@@ -294,10 +347,11 @@
       <div class="card__map">${trackSVG(r.id, { mono: r.cancelled })}</div>
       <div class="card__body">
         <div class="card__country">${flag(r.cc)}${esc(r.country)}</div>
-        <h3 class="card__gp">${esc(r.gp.replace(/ Grand Prix$/, ""))}</h3>
+        <h3 class="card__gp">${esc(r.gp.replace(/ Grand Prix$/, "").replace(/ Grand Prix in /, " GP in "))}</h3>
         <div class="card__circuit">${esc(r.circuit)}</div>
         <span class="card__date">${fmtRange(r)}</span>
       </div>
+      ${winnerHTML(r)}
       <div class="card__stats">
         <div><span class="k">Length</span><span class="v">${r.length.toFixed(3)}<small> km</small></span></div>
         <div><span class="k">Laps</span><span class="v">${r.laps}</span></div>
@@ -330,6 +384,7 @@
       if (io) io.observe(img);
       else attachPhoto(img, RACES.find((x) => x.id === img.dataset.photo));
     });
+    fillDriverPhotos(grid);
   }
 
   /* ---------------- Modal ---------------- */
@@ -364,6 +419,7 @@
           <div class="legend"><span><i style="background:var(--s1)"></i>S1</span><span><i style="background:var(--s2)"></i>S2</span><span><i style="background:var(--s3)"></i>S3</span></div>
         </div>
         <div class="tower">
+          ${winnerHTML(r, true)}
           <div class="tower__row tower__row--record">
             <span class="k">Lap record</span>
             <span><span class="v">${r.lapRecord.time}</span><span class="lap-by">${esc(r.lapRecord.driver)} · ${esc(r.lapRecord.team)} · ${r.lapRecord.year}</span></span>
@@ -375,6 +431,7 @@
       const c = $("#modalCredit", modal);
       if (v) { c.href = v.page; c.textContent = "Photo: Wikimedia Commons — " + v.name.replace(/\.[a-z]+$/i, "").replace(/_/g, " "); }
     });
+    fillDriverPhotos(modal);
     if (typeof modal.showModal === "function") modal.showModal(); else modal.setAttribute("open", "");
   }
   modal.addEventListener("click", (e) => {

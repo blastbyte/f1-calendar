@@ -343,3 +343,49 @@ img { display: block; max-width: 100%; }
 }
 .tower__row .v { white-space: normal; }
 .card__stats .v { white-space: nowrap; }
+
+/* ---------- Race winner ---------- */
+.winner {
+  position: relative; z-index: 2; display: flex; align-items: center; gap: 14px;
+  margin: 16px 20px 0; padding: 8px 14px 8px 8px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--team) 26%, transparent), rgba(255, 255, 255, 0.02) 75%);
+  border-left: 4px solid var(--team);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+}
+.winner__pic {
+  position: relative; flex: none; width: 52px; height: 52px; overflow: hidden; display: grid; place-items: center;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--team) 55%, #000), #0b0b12);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+}
+.winner__pic span { font-weight: 900; font-style: italic; font-size: 15px; letter-spacing: 0.04em; color: rgba(255, 255, 255, 0.85); }
+.winner__pic img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%;
+  opacity: 0; transition: opacity 0.5s;
+}
+.winner__pic img.is-loaded { opacity: 1; }
+.winner__txt { display: grid; min-width: 0; line-height: 1.15; }
+.winner__txt .k { color: var(--team); filter: brightness(1.25); }
+.winner__name { font-size: 18px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.winner__name b { font-weight: 900; text-transform: uppercase; font-style: italic; }
+.winner__team { font-size: 12px; color: var(--muted); font-weight: 600; }
+.winner__flag { width: 22px; height: 22px; margin-left: auto; color: var(--team); flex: none; opacity: 0.9; }
+
+.winner--big { margin: 0; padding: 12px 22px 12px 12px; }
+.winner--big .winner__pic { width: 72px; height: 72px; }
+.winner--big .winner__pic span { font-size: 22px; }
+.winner--big .winner__name { font-size: 22px; }
+.winner--big .winner__team { font-size: 14px; }
+.winner--big .winner__flag { width: 30px; height: 30px; }
+.card__body { padding-bottom: 18px; }
+.card__stats { margin-top: auto; }
+@media (max-width: 560px) {
+  .winner { margin-inline: 16px; gap: 12px; }
+  .winner__name { font-size: 16px; }
+}
+.winner--big .winner__name { white-space: normal; line-height: 1.05; font-size: 17px; }
+.winner--big .winner__name b { display: block; font-size: 26px; }
+@media (max-width: 560px) {
+  .winner--big { gap: 12px; padding-right: 16px; }
+  .winner--big .winner__pic { width: 60px; height: 60px; }
+  .winner--big .winner__name b { font-size: 21px; }
+}
