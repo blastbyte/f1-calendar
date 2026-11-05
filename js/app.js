@@ -446,10 +446,16 @@
         return;
       }
       frame.classList.remove("is-loading");
-      frame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?rel=0&modestbranding=1&playsinline=1"
+      frame.innerHTML = `<button class="hl__play" aria-label="Play ${esc(v.title)}">
+          <img src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" alt="" loading="lazy">
+          <span class="hl__btn">${YT_ICON}</span>
+          <span class="hl__title">${esc(v.title)}</span>
+        </button>`;
+      $(".hl__play", frame).addEventListener("click", () => {
+        frame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&modestbranding=1"
           title="${esc(v.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
-      frame.insertAdjacentHTML("afterend", `<p class="hl__caption">${esc(v.title)}</p>`);
+      }, { once: true });
     });
   }
 
